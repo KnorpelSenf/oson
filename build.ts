@@ -21,7 +21,7 @@ await build({
   shims: { deno: true },
   package: {
     // package.json properties
-    name: "oson",
+    name: "o-son",
     version: Deno.args[0],
     description: "oson structured object notation",
     license: "MIT",
