@@ -1,15 +1,16 @@
 import { build, emptyDir } from "https://deno.land/x/dnt@0.30.0/mod.ts";
 
-if (!Deno.args[0]) {
-  let version: string | undefined = undefined;
+const version = Deno.args[0];
+if (!version) {
+  let previous: string | undefined = undefined;
   try {
-    version =
-      JSON.parse(await Deno.readTextFile("./npm/package.json")).version ??
-      "unknown";
+    previous = JSON.parse(Deno.readTextFileSync("./npm/package.json")).version;
   } catch {
-    version = "unknown";
+    // ignore
+  } finally {
+    previous ??= "unknown";
   }
-  throw new Error(`Provide a version number! Last one is: ${version}`);
+  throw new Error(`Provide a version number! Last one is: ${previous}`);
 }
 
 await emptyDir("./npm");
@@ -37,3 +38,7 @@ await build({
 // post build steps
 Deno.copyFileSync("LICENSE", "npm/LICENSE");
 Deno.copyFileSync("README.md", "npm/README.md");
+const process = Deno.run({
+  cmd: ["git", "tag", version],
+});
+await process.status();
