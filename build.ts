@@ -18,7 +18,13 @@ await emptyDir("./npm");
 await build({
   entryPoints: ["./mod.ts"],
   outDir: "./npm",
-  shims: { deno: true },
+  shims: {
+    deno: true,
+    custom: [{
+      globalNames: ["TextEncoder", "TextDecoder"],
+      module: "util",
+    }],
+  },
   package: {
     // package.json properties
     name: "o-son",
