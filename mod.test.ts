@@ -70,5 +70,8 @@ describe("oson", () => {
     const inner = { a: { b: 42 } };
     const outer = { x: inner, y: inner };
     test(outer);
+    const copy: typeof outer = parse(stringify(outer));
+    copy.x.a.b++;
+    assertEquals(copy.x, copy.y);
   });
 });
