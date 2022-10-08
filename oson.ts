@@ -1,33 +1,44 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-import {
-  ARRAY_HOLE_INDEX,
-  fromMagicNumber,
-  type OsonMagic,
-  toMagicNumber,
-} from "./magic.ts";
+export const UNDEFINED_INDEX = -1 as const;
+export const ARRAY_HOLE_INDEX = -2 as const;
+export const NAN_INDEX = -3 as const;
+export const POS_INF_INDEX = -4 as const;
+export const NEG_INF_INDEX = -5 as const;
 
-// export type ConstructorMap<C = any> = Map<
-//   new () => C,
-//   SerializableConstructor<C>
-// >;
-// export interface SerializableConstructor<C, V = any[]> {
-//   deconstruct: (instance: C) => V;
-//   reconstruct: (val: V) => C;
-// }
+export type OsonMagic =
+  | typeof UNDEFINED_INDEX
+  | typeof ARRAY_HOLE_INDEX
+  | typeof NAN_INDEX
+  | typeof POS_INF_INDEX
+  | typeof NEG_INF_INDEX;
 
 export type Oson = OsonMagic | OsonValue[];
-type OsonValue = OsonPrimitive | OsonArray | OsonObject;
-type OsonPrimitive = string | number | boolean | null;
-type OsonArray = number[];
-type OsonObject = [label: string, ...values: number[]];
+export type OsonValue = OsonPrimitive | OsonArray | OsonObject;
+export type OsonPrimitive = string | number | boolean | null;
+export type OsonArray = number[];
+export type OsonObject = [label: string, ...values: number[]];
 
-export function stringify(value: unknown = undefined): string {
-  return JSON.stringify(listify(value));
+export * from "./constructors.ts";
+import {
+  type ConstructorMap,
+  GLOBAL_CONSTRUCTOR_MAP,
+  PLAIN_OBJECT_LABEL,
+} from "./constructors.ts";
+
+export function stringify<C = any>(
+  value: unknown = undefined,
+  constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
+): string {
+  return JSON.stringify(listify(value, constructors));
 }
 
-export function listify(value: unknown): Oson {
+export function listify<C = any>(
+  value: unknown,
+  constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
+): Oson {
   const num = toMagicNumber(value);
   if (num !== null) return num;
+
   const list: OsonValue[] = [];
   const index = new Map<unknown, number>();
 
@@ -60,7 +71,7 @@ export function listify(value: unknown): Oson {
             arr.push(i in value ? add(value[i]) : ARRAY_HOLE_INDEX);
           }
         } else {
-          const [label, vals] = fromObject(value);
+          const [label, vals] = fromObject(value, constructors);
           const arr: OsonObject = [label];
           list[position] = arr;
           index.set(value, position);
@@ -74,36 +85,66 @@ export function listify(value: unknown): Oson {
 function isOsonArray(array: OsonArray | OsonObject): array is OsonArray {
   return typeof array[0] !== "string";
 }
-function fromObject(value: object): [string, unknown[]] {
+function fromObject(
+  value: object,
+  constructors: ConstructorMap,
+): [string, unknown[]] {
+  // check if we have this instance registered
+  for (const [label, c] of constructors.entries()) {
+    if (value instanceof c.instance) {
+      return [label, c.from(value)];
+    }
+  }
+  // no instance found, fall back to normal object
   const val: unknown[] = [];
   for (const [k, v] of Object.entries(value)) val.push(k, v);
-  return ["o", val];
+  return [PLAIN_OBJECT_LABEL, val];
 }
-function stubObject(label: string) {
-  switch (label) {
-    case "o":
-      return {};
-    default:
-      throw new Error(`Unknown stub type: ${label}`);
+function stubObject(label: string, constructors: ConstructorMap) {
+  if (label === PLAIN_OBJECT_LABEL) return {};
+  const stub = constructors.get(label);
+  if (stub === undefined) {
+    throw new Error(`Unknown stub type: ${label}`);
   }
+  if (!("stub" in stub)) {
+    throw new Error(`Do not know how to stub type: ${label}`);
+  }
+  return stub.stub();
 }
-function hydrateObject(label: string, value: object, vals: any[]) {
-  switch (label) {
-    case "o": {
-      const object = value as Record<string, any>;
-      for (let i = 0; i < vals.length; i += 2) object[vals[i]] = vals[i + 1];
-      break;
+function hydrateObject(
+  label: string,
+  stub: object,
+  val: any,
+  constructors: ConstructorMap,
+) {
+  if (label === PLAIN_OBJECT_LABEL) {
+    const object = stub as Record<string, any>;
+    for (let i = 0; i < val.length; i += 2) {
+      object[val[i]] = val[i + 1];
     }
-    default:
-      throw new Error(`Unknown object type: ${label}`);
+    return object;
   }
+  const hydrator = constructors.get(label);
+  if (hydrator === undefined) {
+    throw new Error(`Unknown object type: ${label}`);
+  }
+  if (!("hydrate" in hydrator)) {
+    throw new Error(`Do not know how to hydrate stub type: ${label}`);
+  }
+  hydrator.hydrate(stub, val);
 }
 
-export function parse(text: string): any {
-  return delistify(JSON.parse(text));
+export function parse<C = any>(
+  text: string,
+  constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
+): any {
+  return delistify(JSON.parse(text), constructors);
 }
 
-export function delistify(oson: Oson): any {
+export function delistify<C = any>(
+  oson: Oson,
+  constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
+): any {
   if (!Array.isArray(oson)) {
     const val = fromMagicNumber(oson);
     if (val !== null) return val;
@@ -133,9 +174,15 @@ export function delistify(oson: Oson): any {
               }
             } else {
               const [label, ...vals] = value;
-              const object = stubObject(label);
-              index[position] = object;
-              hydrateObject(label, object, vals.map(recover));
+              const stub = stubObject(label, constructors);
+              index[position] = stub;
+              const real = hydrateObject(
+                label,
+                stub,
+                vals.map(recover),
+                constructors,
+              );
+              index[position] = real;
             }
             break;
           }
@@ -148,5 +195,28 @@ export function delistify(oson: Oson): any {
       }
     }
     return index[position];
+  }
+}
+
+function toMagicNumber(value: unknown): OsonMagic | null {
+  if (value === undefined) return UNDEFINED_INDEX;
+  if (typeof value === "number") {
+    if (isNaN(value)) return NAN_INDEX;
+    if (!isFinite(value)) return value < 0 ? NEG_INF_INDEX : POS_INF_INDEX;
+  }
+  return null;
+}
+function fromMagicNumber(value: number): undefined | number | null {
+  switch (value) {
+    case UNDEFINED_INDEX:
+      return undefined;
+    case NAN_INDEX:
+      return NaN;
+    case NEG_INF_INDEX:
+      return -Infinity;
+    case POS_INF_INDEX:
+      return Infinity;
+    default:
+      return null;
   }
 }

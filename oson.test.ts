@@ -39,52 +39,57 @@ describe("listify", () => {
     assertEquals(listify([, 1]), [[-2, 1], 1]);
     assertEquals(listify([1, , 3]), [[1, -2, 2], 1, 3]);
     assertEquals(listify([1, , 3, , 4]), [[1, -2, 2, -2, 3], 1, 3, 4]);
+    assertEquals(listify([1, , , , -1, ,]), [[1, -2, -2, -2, 2, -2], 1, -1]);
   });
   it("can serialize objects", () => {
-    assertEquals(listify({ a: 0 }), [["o", 1, 2], "a", 0]);
-    assertEquals(listify({ a: "b" }), [["o", 1, 2], "a", "b"]);
-    assertEquals(listify({ a: 0, b: 1 }), [["o", 1, 2, 3, 4], "a", 0, "b", 1]);
-    assertEquals(listify({}), [["o"]]);
+    assertEquals(listify({ a: 0 }), [["", 1, 2], "a", 0]);
+    assertEquals(listify({ a: "b" }), [["", 1, 2], "a", "b"]);
+    assertEquals(listify({ a: 0, b: 1 }), [["", 1, 2, 3, 4], "a", 0, "b", 1]);
+    assertEquals(listify({}), [[""]]);
+  });
+  it("can serialize built-in global class instances", () => {
+    assertEquals(listify(new Map()), [["Map"]]);
+    assertEquals(listify(new Map().set("a", 0)), [["Map", 1], [2, 3], "a", 0]);
   });
   it("can serialize nested objects", () => {
     assertEquals(listify({ a: { b: 0 } }), [
-      ["o", 1, 2],
+      ["", 1, 2],
       "a",
-      ["o", 3, 4],
+      ["", 3, 4],
       "b",
       0,
     ]);
-    assertEquals(listify({ a: ["", 0] }), [["o", 1, 2], "a", [3, 4], "", 0]);
+    assertEquals(listify({ a: ["", 0] }), [["", 1, 2], "a", [3, 4], "", 0]);
     assertEquals(listify({ a: 0, b: 1, c: [{ x: "a", y: ["b"] }] }), [
-      ["o", 1, 2, 3, 4, 5, 6],
+      ["", 1, 2, 3, 4, 5, 6],
       "a",
       0,
       "b",
       1,
       "c",
       [7],
-      ["o", 8, 1, 9, 10],
+      ["", 8, 1, 9, 10],
       "x",
       "y",
       [3],
     ]);
     assertEquals(listify({ v: { w: {} } }), [
-      ["o", 1, 2],
+      ["", 1, 2],
       "v",
-      ["o", 3, 4],
+      ["", 3, 4],
       "w",
-      ["o"],
+      [""],
     ]);
   });
   it("can serialize objects with circular references", () => {
     const obj: any = { a: { b: { c: 0 } } };
     obj.a.b.c = obj;
     assertEquals(listify(obj), [
-      ["o", 1, 2],
+      ["", 1, 2],
       "a",
-      ["o", 3, 4],
+      ["", 3, 4],
       "b",
-      ["o", 5, 0],
+      ["", 5, 0],
       "c",
     ]);
     const left: any = { value: 0 };
@@ -92,20 +97,20 @@ describe("listify", () => {
     left.value = right;
     assertEquals(listify([left, right]), [
       [1, 3],
-      ["o", 2, 3],
+      ["", 2, 3],
       "value",
-      ["o", 2, 1],
+      ["", 2, 1],
     ]);
   });
   it("can serialize objects with repeated references", () => {
     const inner = { a: { b: 42 } };
     const outer = { x: inner, y: inner };
     assertEquals(listify(outer), [
-      ["o", 1, 2, 7, 2],
+      ["", 1, 2, 7, 2],
       "x",
-      ["o", 3, 4],
+      ["", 3, 4],
       "a",
-      ["o", 5, 6],
+      ["", 5, 6],
       "b",
       42,
       "y",
@@ -150,36 +155,36 @@ describe("delistify", () => {
     assertEquals(delistify([[1, -2, 2, -2, 3], 1, 3, 4]), [1, , 3, , 4]);
   });
   it("can parse objects", () => {
-    assertEquals(delistify([["o", 1, 2], "a", 0]), { a: 0 });
-    assertEquals(delistify([["o", 1, 2], "a", "b"]), { a: "b" });
-    assertEquals(delistify([["o", 1, 2, 3, 4], "a", 0, "b", 1]), {
+    assertEquals(delistify([["", 1, 2], "a", 0]), { a: 0 });
+    assertEquals(delistify([["", 1, 2], "a", "b"]), { a: "b" });
+    assertEquals(delistify([["", 1, 2, 3, 4], "a", 0, "b", 1]), {
       a: 0,
       b: 1,
     });
-    assertEquals(delistify([["o"]]), {});
+    assertEquals(delistify([[""]]), {});
   });
   it("can parse nested objects", () => {
-    assertEquals(delistify([["o", 1, 2], "a", ["o", 3, 4], "b", 0]), {
+    assertEquals(delistify([["", 1, 2], "a", ["", 3, 4], "b", 0]), {
       a: { b: 0 },
     });
-    assertEquals(delistify([["o", 1, 2], "a", [3, 4], "", 0]), { a: ["", 0] });
+    assertEquals(delistify([["", 1, 2], "a", [3, 4], "", 0]), { a: ["", 0] });
     assertEquals(
       delistify([
-        ["o", 1, 2, 3, 4, 5, 6],
+        ["", 1, 2, 3, 4, 5, 6],
         "a",
         0,
         "b",
         1,
         "c",
         [7],
-        ["o", 8, 1, 9, 10],
+        ["", 8, 1, 9, 10],
         "x",
         "y",
         [3],
       ]),
       { a: 0, b: 1, c: [{ x: "a", y: ["b"] }] },
     );
-    assertEquals(delistify([["o", 1, 2], "v", ["o", 3, 4], "w", ["o"]]), {
+    assertEquals(delistify([["", 1, 2], "v", ["", 3, 4], "w", [""]]), {
       v: { w: {} },
     });
   });
@@ -187,13 +192,13 @@ describe("delistify", () => {
     const obj: any = { a: { b: { c: 0 } } };
     obj.a.b.c = obj;
     assertEquals(
-      delistify([["o", 1, 2], "a", ["o", 3, 4], "b", ["o", 5, 0], "c"]),
+      delistify([["", 1, 2], "a", ["", 3, 4], "b", ["", 5, 0], "c"]),
       obj,
     );
     const left: any = { value: 0 };
     const right: any = { value: left };
     left.value = right;
-    assertEquals(delistify([[1, 3], ["o", 2, 3], "value", ["o", 2, 1]]), [
+    assertEquals(delistify([[1, 3], ["", 2, 3], "value", ["", 2, 1]]), [
       left,
       right,
     ]);
@@ -203,11 +208,11 @@ describe("delistify", () => {
     const outer = { x: inner, y: inner };
     assertEquals(
       delistify([
-        ["o", 1, 2, 7, 2],
+        ["", 1, 2, 7, 2],
         "x",
-        ["o", 3, 4],
+        ["", 3, 4],
         "a",
-        ["o", 5, 6],
+        ["", 5, 6],
         "b",
         42,
         "y",
