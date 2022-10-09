@@ -32,6 +32,12 @@ describe("oson", () => {
     test(void 0);
     test(null);
   });
+  it("can work with bigints", () => {
+    test(0n);
+    test(-100n);
+    test(523547235723763498657304658394876094765029746509275n);
+    test(-(2n << 1024n));
+  });
   it("can work with arrays", () => {
     test(["a", "b", "c"]);
     test([1, 2, 3]);

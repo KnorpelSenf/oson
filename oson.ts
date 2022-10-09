@@ -1,9 +1,13 @@
 // deno-lint-ignore-file ban-types no-explicit-any
+// magic numbers for values
 export const UNDEFINED_INDEX = -1 as const;
 export const ARRAY_HOLE_INDEX = -2 as const;
 export const NAN_INDEX = -3 as const;
 export const POS_INF_INDEX = -4 as const;
 export const NEG_INF_INDEX = -5 as const;
+
+// magic numbers for oson list type labels
+export const BIG_INT_LABEL = -6 as const;
 
 export type OsonMagic =
   | typeof UNDEFINED_INDEX
@@ -13,10 +17,19 @@ export type OsonMagic =
   | typeof NEG_INF_INDEX;
 
 export type Oson = OsonMagic | OsonValue[];
-export type OsonValue = OsonPrimitive | OsonArray | OsonObject;
+export type OsonValue = OsonPrimitive | OsonList;
+export type OsonList = OsonBigInt | OsonArray | OsonObject;
 export type OsonPrimitive = string | number | boolean | null;
+export type OsonBigInt = [typeof BIG_INT_LABEL, string];
 export type OsonArray = number[];
 export type OsonObject = [label: string, ...values: number[]];
+
+function isOsonObject(array: OsonList): array is OsonObject {
+  return typeof array[0] === "string";
+}
+function isOsonBigInt(array: OsonList): array is OsonBigInt {
+  return array[0] === BIG_INT_LABEL;
+}
 
 export * from "./constructors.ts";
 import {
@@ -72,9 +85,6 @@ function sparse(len: number) {
   return SPARSE_PROTO.slice(0, len);
 }
 
-function isOsonArray(array: OsonArray | OsonObject): array is OsonArray {
-  return typeof array[0] !== "string";
-}
 function fromObject(
   value: object,
   constructors: ConstructorMap,
@@ -166,6 +176,11 @@ export function listify<C = any>(
         list[position] = value;
         index.set(value, position);
         break;
+      case "bigint": {
+        list[position] = [BIG_INT_LABEL, value.toString(16)];
+        index.set(value, position);
+        break;
+      }
       case "object":
         if (value === null) {
           list[position] = value;
@@ -204,7 +219,7 @@ export function delistify<C = any>(
   }
   if (oson.length === 0) throw new Error("Empty Oson data!");
   const list = oson;
-  const index: any[] = [];
+  const index = Array(oson.length);
   recover(0);
   return index[0];
 
@@ -217,17 +232,13 @@ export function delistify<C = any>(
       switch (typeof value) {
         case "object":
           if (value !== null) {
-            if (isOsonArray(value)) {
-              const len = value.length;
-              const array: any[] = Array(len);
-              index[position] = array;
-              for (let i = 0; i < len; i++) {
-                const val = value[i];
-                if (val !== ARRAY_HOLE_INDEX) {
-                  array[i] = recover(val);
-                }
-              }
-            } else {
+            if (isOsonBigInt(value)) {
+              const val = value[1];
+              const num = val.startsWith("-")
+                ? -BigInt("0x" + val.substring(1))
+                : BigInt("0x" + val);
+              index[position] = num;
+            } else if (isOsonObject(value)) {
               const [label, ...vals] = value;
               const stub = stubObject(label, constructors);
               if (stub === undefined) {
@@ -238,6 +249,16 @@ export function delistify<C = any>(
                 index[position] = stub;
                 const v = vals.map(recover);
                 hydrateObject(label, stub, v, constructors);
+              }
+            } else {
+              const len = value.length;
+              const array = Array(len);
+              index[position] = array;
+              for (let i = 0; i < len; i++) {
+                const val = value[i];
+                if (val !== ARRAY_HOLE_INDEX) {
+                  array[i] = recover(val);
+                }
               }
             }
             break;

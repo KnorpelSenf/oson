@@ -31,6 +31,18 @@ describe("listify", () => {
     assertEquals(listify(void 0), -1);
     assertEquals(listify(null), [null]);
   });
+  it("can serialize bigints values", () => {
+    assertEquals(listify(0n), [[-6, "0"]]);
+    assertEquals(listify(-3n), [[-6, "-3"]]);
+    assertEquals(
+      listify(34632049865209468204965n),
+      [[-6, 34632049865209468204965n.toString(16)]],
+    );
+    assertEquals(
+      listify(-1314293875349763465329750293542387n),
+      [[-6, (-1314293875349763465329750293542387n).toString(16)]],
+    );
+  });
   it("can serialize arrays", () => {
     assertEquals(listify(["a", "b", "c"]), [[1, 2, 3], "a", "b", "c"]);
     assertEquals(listify([1, 2, 3]), [[1, 2, 3], 1, 2, 3]);
@@ -153,6 +165,18 @@ describe("delistify", () => {
     assertEquals(delistify(-1), undefined);
     assertEquals(delistify(-1), void 0);
     assertEquals(delistify([null]), null);
+  });
+  it("can parse bigints values", () => {
+    assertEquals(delistify([[-6, "0"]]), 0n);
+    assertEquals(delistify([[-6, "-3"]]), -3n);
+    assertEquals(
+      delistify([[-6, 34632049865209468204965n.toString(16)]]),
+      34632049865209468204965n,
+    );
+    assertEquals(
+      delistify([[-6, (-1314293875349763465329750293542387n).toString(16)]]),
+      -1314293875349763465329750293542387n,
+    );
   });
   it("can parse arrays", () => {
     assertEquals(delistify([[1, 2, 3], "a", "b", "c"]), ["a", "b", "c"]);
