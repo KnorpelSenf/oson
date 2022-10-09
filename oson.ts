@@ -117,7 +117,6 @@ function fromObject(
     val[ii] = entry[0];
     val[ii + 1] = entry[1];
   }
-  // for (const [k, v] of Object.entries(value)) val.push(k, v);
   return [PLAIN_OBJECT_LABEL, val];
 }
 function stubObject(label: string, constructors: ConstructorMap) {
