@@ -64,22 +64,36 @@ export function listify<C = any>(
           list[position] = value;
           index.set(value, position);
         } else if (Array.isArray(value)) {
-          const arr: OsonArray = [];
+          const arr: OsonArray = sparse(value.length);
           list[position] = arr;
           index.set(value, position);
-          for (let i = 0; i < value.length; i++) {
-            arr.push(i in value ? add(value[i]) : ARRAY_HOLE_INDEX);
+          for (const i in value) {
+            arr[i] = add(value[i]);
           }
         } else {
           const [label, vals] = fromObject(value, constructors);
-          const arr: OsonObject = [label];
+          const len = vals.length;
+          const arr = Array(len + 1) as OsonObject;
+          arr[0] = label;
           list[position] = arr;
           index.set(value, position);
-          for (const val of vals) arr.push(add(val));
+          for (let i = 0; i < len; i++) {
+            arr[i] = add(vals[i]);
+          }
         }
     }
     return position;
   }
+}
+
+const SPARSE_PROTO: number[] = [];
+function sparse(len: number) {
+  if (SPARSE_PROTO.length < len) {
+    const old = SPARSE_PROTO.length;
+    SPARSE_PROTO.length = len;
+    SPARSE_PROTO.fill(ARRAY_HOLE_INDEX, old, len);
+  }
+  return SPARSE_PROTO.slice(0, len);
 }
 
 function isOsonArray(array: OsonArray | OsonObject): array is OsonArray {
@@ -90,14 +104,19 @@ function fromObject(
   constructors: ConstructorMap,
 ): [string, unknown[]] {
   // check if we have this instance registered
-  for (const [label, c] of constructors.entries()) {
-    if (value instanceof c.instance) {
-      return [label, c.from(value)];
-    }
-  }
+  const label = value.constructor.name;
+  const inst = constructors.get(label);
+  if (inst !== undefined) return [label, inst.from(value)];
   // no instance found, fall back to normal object
-  const val: unknown[] = [];
-  for (const [k, v] of Object.entries(value)) val.push(k, v);
+  const entries = Object.entries(value);
+  const cnt = entries.length;
+  const val: unknown[] = Array(cnt + cnt);
+  for (let i = 0; i < cnt; i++) {
+    const entry = entries[i];
+    val[i] = entry[0];
+    i++;
+    val[i] = entry[1];
+  }
   return [PLAIN_OBJECT_LABEL, val];
 }
 function stubObject(label: string, constructors: ConstructorMap) {
@@ -176,11 +195,14 @@ export function delistify<C = any>(
         case "object":
           if (value !== null) {
             if (isOsonArray(value)) {
-              const array: any[] = [];
+              const len = value.length;
+              const array: any[] = Array(len);
               index[position] = array;
-              for (const i of value) {
-                if (i === ARRAY_HOLE_INDEX) array.length++;
-                else array.push(recover(i));
+              for (let i = 0; i < len; i++) {
+                const val = value[i];
+                if (val !== ARRAY_HOLE_INDEX) {
+                  array[i] = recover(val);
+                }
               }
             } else {
               const [label, ...vals] = value;
