@@ -8,5 +8,6 @@
     "build": "deno run --allow-run --allow-net --allow-env --allow-read --allow-write build.ts",
     "release": "[ -f npm/package.json ] && git push --tags && cd npm && npm publish || echo Missing build output!"
   },
-  "lint": { "files": { "exclude": ["npm", "arson"] } }
+  "lint": { "files": { "exclude": ["npm", "arson"] } },
+  "fmt": { "files": { "exclude": ["npm", "arson"] } }
 }
