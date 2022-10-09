@@ -78,7 +78,7 @@ export function listify<C = any>(
           list[position] = arr;
           index.set(value, position);
           for (let i = 0; i < len; i++) {
-            arr[i] = add(vals[i]);
+            arr[i + 1] = add(vals[i]);
           }
         }
     }
@@ -113,10 +113,11 @@ function fromObject(
   const val: unknown[] = Array(cnt + cnt);
   for (let i = 0; i < cnt; i++) {
     const entry = entries[i];
-    val[i] = entry[0];
-    i++;
-    val[i] = entry[1];
+    const ii = i + i;
+    val[ii] = entry[0];
+    val[ii + 1] = entry[1];
   }
+  // for (const [k, v] of Object.entries(value)) val.push(k, v);
   return [PLAIN_OBJECT_LABEL, val];
 }
 function stubObject(label: string, constructors: ConstructorMap) {
