@@ -1,5 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "https://deno.land/std@0.157.0/testing/asserts.ts";
+import {
+  assertEquals,
+  assertInstanceOf,
+  assertStrictEquals,
+} from "https://deno.land/std@0.157.0/testing/asserts.ts";
 import { describe, it } from "https://deno.land/std@0.157.0/testing/bdd.ts";
 
 import { delistify, listify } from "./oson.ts";
@@ -47,9 +51,18 @@ describe("listify", () => {
     assertEquals(listify({ a: 0, b: 1 }), [["", 1, 2, 3, 4], "a", 0, "b", 1]);
     assertEquals(listify({}), [[""]]);
   });
-  it("can serialize built-in global class instances", () => {
+  it("can serialize built-in containers", () => {
+    const error = new Error("msg");
+    delete error.stack;
+    assertEquals(listify(error), [["Error", 1, 2], "Error", "msg"]);
+    error.name = "name";
+    assertEquals(listify(error), [["Error", 1, 2], "name", "msg"]);
+    error.cause = error;
+    assertEquals(listify(error), [["Error", 1, 2, -1, 0], "name", "msg"]);
     assertEquals(listify(new Map()), [["Map"]]);
     assertEquals(listify(new Map().set("a", 0)), [["Map", 1], [2, 3], "a", 0]);
+    assertEquals(listify(new Set()), [["Set"]]);
+    assertEquals(listify(new Set().add("a")), [["Set", 1], "a"]);
   });
   it("can serialize nested objects", () => {
     assertEquals(listify({ a: { b: 0 } }), [
@@ -162,6 +175,23 @@ describe("delistify", () => {
       b: 1,
     });
     assertEquals(delistify([[""]]), {});
+  });
+  it("can parse built-in containers", () => {
+    assertInstanceOf(delistify([["Error", 1, 2], "Error", "msg"]), Error);
+    assertEquals(delistify([["Error", 1, 2], "name", "msg"]).name, "name");
+    assertEquals(
+      delistify([["Error", 1, 2, 3], "name", "msg", "my-stack"]).stack,
+      "my-stack",
+    );
+    const err = delistify([["Error", 1, 2, -1, 0], "name", "msg"]);
+    assertStrictEquals(err, err.cause);
+    assertEquals(delistify([["Map"]]), new Map());
+    assertEquals(
+      delistify([["Map", 1], [2, 3], "a", 0]),
+      new Map().set("a", 0),
+    );
+    assertEquals(delistify([["Set"]]), new Set());
+    assertEquals(delistify([["Set", 1], "a"]), new Set().add("a"));
   });
   it("can parse nested objects", () => {
     assertEquals(delistify([["", 1, 2], "a", ["", 3, 4], "b", 0]), {

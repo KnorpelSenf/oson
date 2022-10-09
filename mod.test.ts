@@ -13,7 +13,7 @@ describe("oson", () => {
   it("can work with numbers", () => {
     test(3);
     test(0);
-    test(-1);
+    test(-1.3);
     test(NaN);
     test(Infinity);
     test(-Infinity);
@@ -56,6 +56,19 @@ describe("oson", () => {
     test({ a: ["", 0] });
     test({ a: 0, b: 1, c: [{ x: "a", y: ["b"] }] });
     test({ v: { w: {} } });
+  });
+  it("can work with built-in types", () => {
+    const e = new Error("damn");
+    const r = parse(stringify(e));
+    assertEquals(e.name, r.name);
+    assertEquals(e.message, r.message);
+    assertEquals(e.stack, r.stack);
+    assertEquals(e.cause, r.cause);
+    test(new Uint8Array([3, 2, 1]));
+    test(new Map([["a", "b"], ["c", "d"], ["e", "f"]]));
+    test(new Set([..."hello oson"]));
+    test([new Date(), new Date(Date.now() - 1000000)]);
+    test([/asdf/, /jjj.+/gmi]);
   });
   it("can work with objects with circular references", () => {
     const obj: any = { a: { b: { c: 0 } } };
