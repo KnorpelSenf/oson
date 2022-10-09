@@ -3,11 +3,12 @@
     "dev": "deno fmt && deno lint && deno task test && deno task check",
     "test": "bash -c 'echo *.test.ts' | xargs deno test",
     "check": "deno cache --check=all mod.ts",
-    "coverage": "deno task test --coverage=./test/cov_profile && deno coverage --lcov --output=./coverage.lcov ./test/cov_profile",
-    "report": "genhtml ./coverage.lcov --output-directory ./test/coverage/ && echo 'Point your browser to test/coverage/index.html to see the test coverage report.'",
+    "coverage": "deno task test --coverage=./cov_profile && deno coverage --lcov --output=./coverage.lcov ./cov_profile",
+    "report": "genhtml ./coverage.lcov --output-directory ./coverage/ && echo 'Point your browser to coverage/index.html to see the test coverage report.'",
     "bench": "deno bench --unstable mod.bench.ts",
     "build": "deno run --allow-run --allow-net --allow-env --allow-read --allow-write build.ts",
-    "release": "[ -f npm/package.json ] && git push --tags && cd npm && npm publish || echo Missing build output!"
+    "release": "[ -f npm/package.json ] && git push --tags && cd npm && npm publish || echo Missing build output!",
+    "clean": "rm -rf cov_profile coverage npm coverage.lcov"
   },
   "lint": { "files": { "exclude": ["npm", "arson"] } },
   "fmt": { "files": { "exclude": ["npm", "arson"] } }
