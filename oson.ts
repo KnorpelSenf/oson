@@ -101,15 +101,15 @@ function fromObject(
   return [PLAIN_OBJECT_LABEL, val];
 }
 function stubObject(label: string, constructors: ConstructorMap) {
+  // stub a plain object
   if (label === PLAIN_OBJECT_LABEL) return {};
+  // stub an instance
   const stub = constructors.get(label);
   if (stub === undefined) {
     throw new Error(`Unknown stub type: ${label}`);
   }
-  if (!("stub" in stub)) {
-    throw new Error(`Do not know how to stub type: ${label}`);
-  }
-  return stub.stub();
+  if ("stub" in stub) return stub.stub();
+  else return undefined;
 }
 function hydrateObject(
   label: string,
@@ -132,6 +132,16 @@ function hydrateObject(
     throw new Error(`Do not know how to hydrate stub type: ${label}`);
   }
   hydrator.hydrate(stub, val);
+}
+function createObject(label: string, val: any, constructors: ConstructorMap) {
+  const creator = constructors.get(label);
+  if (creator === undefined) {
+    throw new Error(`Unknown object type: ${label}`);
+  }
+  if (!("create" in creator)) {
+    throw new Error(`Do not know how to create object type: ${label}`);
+  }
+  return creator.create(val);
 }
 
 export function parse<C = any>(
@@ -175,14 +185,15 @@ export function delistify<C = any>(
             } else {
               const [label, ...vals] = value;
               const stub = stubObject(label, constructors);
-              index[position] = stub;
-              const real = hydrateObject(
-                label,
-                stub,
-                vals.map(recover),
-                constructors,
-              );
-              index[position] = real;
+              if (stub === undefined) {
+                const v = vals.map(recover);
+                const o = createObject(label, v, constructors);
+                index[position] = o;
+              } else {
+                index[position] = stub;
+                const v = vals.map(recover);
+                hydrateObject(label, stub, v, constructors);
+              }
             }
             break;
           }
