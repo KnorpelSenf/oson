@@ -32,57 +32,33 @@ export function stringify<C = any>(
   return JSON.stringify(listify(value, constructors));
 }
 
-export function listify<C = any>(
-  value: unknown,
+export function parse<C = any>(
+  text: string,
   constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
-): Oson {
-  const num = toMagicNumber(value);
-  if (num !== null) return num;
+): any {
+  return delistify(JSON.parse(text), constructors);
+}
 
-  const list: OsonValue[] = [];
-  const index = new Map<unknown, number>();
-
-  add(value);
-
-  return list;
-
-  function add(value: unknown): number {
-    const num = toMagicNumber(value);
-    if (num !== null) return num;
-    let position = index.get(value);
-    if (position !== undefined) return position;
-    position = list.length;
-    switch (typeof value) {
-      case "number":
-      case "string":
-      case "boolean":
-        list[position] = value;
-        index.set(value, position);
-        break;
-      case "object":
-        if (value === null) {
-          list[position] = value;
-          index.set(value, position);
-        } else if (Array.isArray(value)) {
-          const arr: OsonArray = sparse(value.length);
-          list[position] = arr;
-          index.set(value, position);
-          for (const i in value) {
-            arr[i] = add(value[i]);
-          }
-        } else {
-          const [label, vals] = fromObject(value, constructors);
-          const len = vals.length;
-          const arr = Array(len + 1) as OsonObject;
-          arr[0] = label;
-          list[position] = arr;
-          index.set(value, position);
-          for (let i = 0; i < len; i++) {
-            arr[i + 1] = add(vals[i]);
-          }
-        }
-    }
-    return position;
+function toMagicNumber(value: unknown): OsonMagic | null {
+  if (value === undefined) return UNDEFINED_INDEX;
+  if (typeof value === "number") {
+    if (isNaN(value)) return NAN_INDEX;
+    if (!isFinite(value)) return value < 0 ? NEG_INF_INDEX : POS_INF_INDEX;
+  }
+  return null;
+}
+function fromMagicNumber(value: number): undefined | number | null {
+  switch (value) {
+    case UNDEFINED_INDEX:
+      return undefined;
+    case NAN_INDEX:
+      return NaN;
+    case NEG_INF_INDEX:
+      return -Infinity;
+    case POS_INF_INDEX:
+      return Infinity;
+    default:
+      return null;
   }
 }
 
@@ -163,11 +139,58 @@ function createObject(label: string, val: any, constructors: ConstructorMap) {
   return creator.create(val);
 }
 
-export function parse<C = any>(
-  text: string,
+export function listify<C = any>(
+  value: unknown,
   constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
-): any {
-  return delistify(JSON.parse(text), constructors);
+): Oson {
+  const num = toMagicNumber(value);
+  if (num !== null) return num;
+
+  const list: OsonValue[] = [];
+  const index = new Map<unknown, number>();
+
+  add(value);
+
+  return list;
+
+  function add(value: unknown): number {
+    const num = toMagicNumber(value);
+    if (num !== null) return num;
+    let position = index.get(value);
+    if (position !== undefined) return position;
+    position = list.length;
+    switch (typeof value) {
+      case "number":
+      case "string":
+      case "boolean":
+        list[position] = value;
+        index.set(value, position);
+        break;
+      case "object":
+        if (value === null) {
+          list[position] = value;
+          index.set(value, position);
+        } else if (Array.isArray(value)) {
+          const arr: OsonArray = sparse(value.length);
+          list[position] = arr;
+          index.set(value, position);
+          for (const i in value) {
+            arr[i] = add(value[i]);
+          }
+        } else {
+          const [label, vals] = fromObject(value, constructors);
+          const len = vals.length;
+          const arr = Array(len + 1) as OsonObject;
+          arr[0] = label;
+          list[position] = arr;
+          index.set(value, position);
+          for (let i = 0; i < len; i++) {
+            arr[i + 1] = add(vals[i]);
+          }
+        }
+    }
+    return position;
+  }
 }
 
 export function delistify<C = any>(
@@ -228,28 +251,5 @@ export function delistify<C = any>(
       }
     }
     return index[position];
-  }
-}
-
-function toMagicNumber(value: unknown): OsonMagic | null {
-  if (value === undefined) return UNDEFINED_INDEX;
-  if (typeof value === "number") {
-    if (isNaN(value)) return NAN_INDEX;
-    if (!isFinite(value)) return value < 0 ? NEG_INF_INDEX : POS_INF_INDEX;
-  }
-  return null;
-}
-function fromMagicNumber(value: number): undefined | number | null {
-  switch (value) {
-    case UNDEFINED_INDEX:
-      return undefined;
-    case NAN_INDEX:
-      return NaN;
-    case NEG_INF_INDEX:
-      return -Infinity;
-    case POS_INF_INDEX:
-      return Infinity;
-    default:
-      return null;
   }
 }
