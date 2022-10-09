@@ -11,5 +11,8 @@
     "clean": "rm -rf cov_profile coverage npm coverage.lcov"
   },
   "lint": { "files": { "exclude": ["npm", "arson"] } },
-  "fmt": { "files": { "exclude": ["npm", "arson"] } }
+  "fmt": {
+    "files": { "exclude": ["npm", "arson"] },
+    "options": { "proseWrap": "preserve" }
+  }
 }
