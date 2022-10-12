@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { assertEquals } from "https://deno.land/std@0.157.0/testing/asserts.ts";
 import { describe, it } from "https://deno.land/std@0.157.0/testing/bdd.ts";
+import fc from "npm:fast-check";
 
 import { parse, stringify } from "./mod.ts";
 
@@ -92,5 +93,20 @@ describe("oson", () => {
     const copy: typeof outer = parse(stringify(outer));
     copy.x.a.b++;
     assertEquals(copy.x, copy.y);
+  });
+  it("passes property-based string tests", () => {
+    fc.assert(fc.property(fc.string(), test));
+  });
+  it("passed property-based object tests", () => {
+    fc.assert(
+      fc.property(
+        fc.object({ withDate: true, withMap: true, withSet: true }),
+        test,
+      ),
+    );
+  });
+  it("supports everything that JSON supports", () => {
+    fc.assert(fc.property(fc.jsonValue(), test));
+    fc.assert(fc.property(fc.unicodeJsonValue(), test));
   });
 });
