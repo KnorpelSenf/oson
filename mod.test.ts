@@ -4,9 +4,20 @@ import { describe, it } from "https://deno.land/std@0.166.0/testing/bdd.ts";
 import fc from "npm:fast-check@3.3.0";
 
 import { parse, stringify } from "./mod.ts";
+import { listify } from "./oson.ts";
 
 function test<T>(value: T) {
   const processed = parse(stringify(value));
+
+  const list = listify(value);
+  if (
+    eval("typeof process") !== "undefined" && // check for Node.js
+    Array.isArray(list) && list.includes("__proto__")
+  ) {
+    // https://github.com/denoland/dnt/issues/235
+    return;
+  }
+
   assertEquals(processed, value);
 }
 
@@ -57,6 +68,7 @@ describe("oson", () => {
     test({ a: "b" });
     test({ a: 0, b: 1 });
     test({});
+    test(JSON.parse('{"__proto__":0}'));
   });
   it("can work with nested objects", () => {
     test({ a: { b: 0 } });
@@ -106,17 +118,7 @@ describe("oson", () => {
     );
   });
   it("supports everything that JSON supports", () => {
-    function testJSON(v: unknown) {
-      try {
-        test(v);
-      } catch (e) {
-        console.log("----->", v);
-        console.log(JSON.stringify(v));
-        console.log(stringify(v));
-        throw e;
-      }
-    }
-    fc.assert(fc.property(fc.jsonValue(), testJSON));
-    fc.assert(fc.property(fc.unicodeJsonValue(), testJSON));
+    fc.assert(fc.property(fc.jsonValue(), test));
+    fc.assert(fc.property(fc.unicodeJsonValue(), test));
   });
 });
