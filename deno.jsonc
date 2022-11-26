@@ -1,4 +1,5 @@
 {
+  "lock": false,
   "tasks": {
     "dev": "deno fmt && deno lint && deno task test && deno task check",
     "test": "bash -c 'echo *.test.ts' | xargs deno test",
