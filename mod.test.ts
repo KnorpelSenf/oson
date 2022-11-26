@@ -107,10 +107,10 @@ describe("oson", () => {
   });
   it("supports everything that JSON supports", () => {
     function testJSON(v: unknown) {
-      console.log(v);
       try {
         test(v);
       } catch (e) {
+        console.log("----->", v);
         console.log(JSON.stringify(v));
         console.log(stringify(v));
         throw e;
