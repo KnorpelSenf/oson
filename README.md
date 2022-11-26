@@ -99,6 +99,16 @@ JSON.stringify(oson.listify(num)); // works!
 
 this lets you avoid repeated serialization.
 
+## non-goals
+
+the following things are explicitly not supported.
+
+and they never will be, because they can never work well.
+
+- symbols (would not preserve equality)
+- functions (would not behave identically)
+- modules (ditto)
+
 ## name
 
 the _oson_ in the name stands for _oson structured object notation_.
