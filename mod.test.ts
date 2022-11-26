@@ -114,8 +114,9 @@ describe("oson", () => {
       }
       try {
         test(v);
-      } finally {
+      } catch (e) {
         console.log(JSON.stringify(v));
+        throw e;
       }
     }
     fc.assert(fc.property(fc.jsonValue(), testJSON));
