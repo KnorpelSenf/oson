@@ -66,6 +66,7 @@ oson can encode **class instances** of the following built-in types:
 - `RegExp`
 - `Error`
 - `Uint8Array`
+- `URL`
 
 oson can encode **class instances** of your custom classes:
 

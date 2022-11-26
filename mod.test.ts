@@ -88,6 +88,7 @@ describe("oson", () => {
     test(new Set([..."hello oson"]));
     test([new Date(), new Date(Date.now() - 1000000)]);
     test([/asdf/, /jjj.+/gmi]);
+    test([new URL("file:///home/user/"), new URL("https://example.com/route")]);
   });
   it("can work with objects with circular references", () => {
     const obj: any = { a: { b: { c: 0 } } };
