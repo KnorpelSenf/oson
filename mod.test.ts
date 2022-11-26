@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "https://deno.land/std@0.157.0/testing/asserts.ts";
-import { describe, it } from "https://deno.land/std@0.157.0/testing/bdd.ts";
-import fc from "npm:fast-check";
+import { assertEquals } from "https://deno.land/std@0.166.0/testing/asserts.ts";
+import { describe, it } from "https://deno.land/std@0.166.0/testing/bdd.ts";
+import fc from "npm:fast-check@3.3.0";
 
 import { parse, stringify } from "./mod.ts";
 
