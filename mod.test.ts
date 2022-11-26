@@ -116,6 +116,7 @@ describe("oson", () => {
         test(v);
       } catch (e) {
         console.log(JSON.stringify(v));
+        console.log(stringify(v));
         throw e;
       }
     }
