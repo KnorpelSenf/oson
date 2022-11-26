@@ -106,7 +106,15 @@ describe("oson", () => {
     );
   });
   it("supports everything that JSON supports", () => {
-    fc.assert(fc.property(fc.jsonValue(), test));
-    fc.assert(fc.property(fc.unicodeJsonValue(), test));
+    function testJSON(v: unknown) {
+      try {
+        v = JSON.parse(JSON.stringify(v));
+      } catch {
+        return;
+      }
+      test(v);
+    }
+    fc.assert(fc.property(fc.jsonValue(), testJSON));
+    fc.assert(fc.property(fc.unicodeJsonValue(), testJSON));
   });
 });
