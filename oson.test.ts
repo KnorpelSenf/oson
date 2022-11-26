@@ -75,6 +75,10 @@ describe("listify", () => {
     assertEquals(listify(new Map().set("a", 0)), [["Map", 1], [2, 3], "a", 0]);
     assertEquals(listify(new Set()), [["Set"]]);
     assertEquals(listify(new Set().add("a")), [["Set", 1], "a"]);
+    assertEquals(listify(new URL("http://example.com/path?param#route")), [
+      ["URL", 1],
+      "http://example.com/path?param#route",
+    ]);
   });
   it("can serialize nested objects", () => {
     assertEquals(listify({ a: { b: 0 } }), [
@@ -216,6 +220,10 @@ describe("delistify", () => {
     );
     assertEquals(delistify([["Set"]]), new Set());
     assertEquals(delistify([["Set", 1], "a"]), new Set().add("a"));
+    assertEquals(
+      delistify([["URL", 1], "http://example.com/path?param#route"]),
+      new URL("http://example.com/path?param#route"),
+    );
   });
   it("can parse nested objects", () => {
     assertEquals(delistify([["", 1, 2], "a", ["", 3, 4], "b", 0]), {

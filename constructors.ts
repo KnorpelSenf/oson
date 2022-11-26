@@ -70,9 +70,14 @@ export function globalConstructorMap() {
     from: ({ source, flags }) => flags ? [source, flags] : [source],
     create: ([source, flags]) => new RegExp(source, flags),
   };
+  const url: ValueConstructor<URL, string> = {
+    instance: URL as unknown as new () => URL,
+    from: (url) => [url.href],
+    create: ([href]) => new URL(href),
+  };
 
   const res: ConstructorMap = new Map();
-  const constructors = [error, uint8Array, map, set, date, regex];
+  const constructors = [error, uint8Array, map, set, date, regex, url];
   for (const c of constructors) res.set(c.instance.name, c);
   return res;
 }
