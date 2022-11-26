@@ -1,11 +1,23 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "https://deno.land/std@0.157.0/testing/asserts.ts";
-import { describe, it } from "https://deno.land/std@0.157.0/testing/bdd.ts";
+import { assertEquals } from "https://deno.land/std@0.166.0/testing/asserts.ts";
+import { describe, it } from "https://deno.land/std@0.166.0/testing/bdd.ts";
+import fc from "npm:fast-check@3.3.0";
 
 import { parse, stringify } from "./mod.ts";
+import { listify } from "./oson.ts";
 
 function test<T>(value: T) {
   const processed = parse(stringify(value));
+
+  const list = listify(value);
+  if (
+    eval("typeof process") !== "undefined" && // check for Node.js
+    Array.isArray(list) && list.includes("__proto__")
+  ) {
+    // https://github.com/denoland/dnt/issues/235
+    return;
+  }
+
   assertEquals(processed, value);
 }
 
@@ -56,6 +68,7 @@ describe("oson", () => {
     test({ a: "b" });
     test({ a: 0, b: 1 });
     test({});
+    test(JSON.parse('{"__proto__":0}'));
   });
   it("can work with nested objects", () => {
     test({ a: { b: 0 } });
@@ -92,5 +105,20 @@ describe("oson", () => {
     const copy: typeof outer = parse(stringify(outer));
     copy.x.a.b++;
     assertEquals(copy.x, copy.y);
+  });
+  it("passes property-based string tests", () => {
+    fc.assert(fc.property(fc.string(), test));
+  });
+  it("passed property-based object tests", () => {
+    fc.assert(
+      fc.property(
+        fc.object({ withDate: true, withMap: true, withSet: true }),
+        test,
+      ),
+    );
+  });
+  it("supports everything that JSON supports", () => {
+    fc.assert(fc.property(fc.jsonValue(), test));
+    fc.assert(fc.property(fc.unicodeJsonValue(), test));
   });
 });
