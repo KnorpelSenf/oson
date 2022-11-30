@@ -90,9 +90,14 @@ function fromObject(
   constructors: ConstructorMap,
 ): [string, unknown[]] {
   // check if we have this instance registered
-  const label = value.constructor.name;
-  const inst = constructors.get(label);
-  if (inst !== undefined) return [label, inst.from(value)];
+  const constr = value.constructor;
+  if (typeof constr === "function") {
+    const label = constr.name;
+    const inst = constructors.get(label);
+    if (inst !== undefined) {
+      return [label, inst.from(value)];
+    }
+  }
   // no instance found, fall back to normal object
   const entries = Object.entries(value);
   const cnt = entries.length;
