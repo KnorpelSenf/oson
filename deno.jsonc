@@ -7,7 +7,7 @@
     "coverage": "deno task test --coverage=./cov_profile && deno coverage --lcov --output=./coverage.lcov ./cov_profile",
     "report": "genhtml ./coverage.lcov --output-directory ./coverage/ && echo 'Point your browser to coverage/index.html to see the test coverage report.'",
     "bench": "deno bench mod.bench.ts",
-    "build": "deno run --allow-run --allow-net --allow-env --allow-read --allow-write build.ts",
+    "build": "NODE_OPTIONS='--disable-proto=delete' deno run --allow-run --allow-net --allow-env --allow-read --allow-write build.ts",
     "release": "[ -f npm/package.json ] && git push --tags && cd npm && npm publish || echo Missing build output!",
     "clean": "rm -rf cov_profile coverage npm coverage.lcov"
   },

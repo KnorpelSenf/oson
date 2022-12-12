@@ -4,21 +4,9 @@ import { describe, it } from "https://deno.land/std@0.166.0/testing/bdd.ts";
 import fc from "npm:fast-check@3.3.0";
 
 import { parse, stringify } from "./mod.ts";
-import { listify } from "./oson.ts";
 
 function test<T>(value: T) {
-  const processed = parse(stringify(value));
-
-  const list = listify(value);
-  if (
-    eval("typeof process") !== "undefined" && // check for Node.js
-    Array.isArray(list) && list.includes("__proto__")
-  ) {
-    // https://github.com/denoland/dnt/issues/235
-    return;
-  }
-
-  assertEquals(processed, value);
+  assertEquals(parse(stringify(value)), value);
 }
 
 describe("oson", () => {
