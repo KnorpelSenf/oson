@@ -1,4 +1,4 @@
-import { build, emptyDir } from "https://deno.land/x/dnt@0.32.0/mod.ts";
+import { build, emptyDir } from "https://deno.land/x/dnt@0.37.0/mod.ts";
 
 const version = Deno.args[0];
 if (!version) {
@@ -19,11 +19,9 @@ await build({
   entryPoints: ["./mod.ts"],
   outDir: "./npm",
   shims: {
-    deno: true,
-    custom: [{
-      globalNames: ["TextEncoder", "TextDecoder"],
-      module: "util",
-    }],
+    deno: {
+      test: "dev",
+    },
   },
   package: {
     // package.json properties
