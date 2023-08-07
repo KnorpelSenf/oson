@@ -42,7 +42,7 @@ await build({
 // post build steps
 Deno.copyFileSync("LICENSE", "npm/LICENSE");
 Deno.copyFileSync("README.md", "npm/README.md");
-const process = Deno.run({
-  cmd: ["git", "tag", version],
-});
-await process.status();
+const process = new Deno.Command("git", {
+  args: ["tag", version],
+}).spawn();
+await process.status;
