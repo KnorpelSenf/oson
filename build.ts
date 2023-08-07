@@ -1,4 +1,4 @@
-import { build, emptyDir } from "https://deno.land/x/dnt@0.32.0/mod.ts";
+import { build, emptyDir } from "https://deno.land/x/dnt@0.37.0/mod.ts";
 
 const version = Deno.args[0];
 if (!version) {
@@ -18,12 +18,11 @@ await emptyDir("./npm");
 await build({
   entryPoints: ["./mod.ts"],
   outDir: "./npm",
+  test: false,
   shims: {
-    deno: true,
-    custom: [{
-      globalNames: ["TextEncoder", "TextDecoder"],
-      module: "util",
-    }],
+    deno: {
+      test: "dev",
+    },
   },
   package: {
     // package.json properties
@@ -44,7 +43,7 @@ await build({
 // post build steps
 Deno.copyFileSync("LICENSE", "npm/LICENSE");
 Deno.copyFileSync("README.md", "npm/README.md");
-const process = Deno.run({
-  cmd: ["git", "tag", version],
-});
-await process.status();
+const process = new Deno.Command("git", {
+  args: ["tag", version],
+}).spawn();
+await process.status;
