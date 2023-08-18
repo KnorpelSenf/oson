@@ -1,4 +1,4 @@
-// deno-lint-ignore-file ban-types no-explicit-any
+// deno-lint-ignore-file no-explicit-any
 // magic numbers for values
 export const UNDEFINED_INDEX = -1 as const;
 export const ARRAY_HOLE_INDEX = -2 as const;
