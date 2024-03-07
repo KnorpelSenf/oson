@@ -1,5 +1,8 @@
 # oson structured object notation
 
+> THIS LIBRARY HAS MOVED TO JSR.
+> PLEASE IMPORT IT FROM [HERE](https://jsr.io/@knorpelsenf/oson) FROM NOW ON.
+
 json has a bunch of problems.
 
 oson fixes them.
