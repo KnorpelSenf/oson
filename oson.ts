@@ -1,12 +1,18 @@
 // deno-lint-ignore-file no-explicit-any
 // magic numbers for values
+/** internal magic number representing undefined */
 export const UNDEFINED_INDEX = -1 as const;
+/** internal magic number representing an array hole */
 export const ARRAY_HOLE_INDEX = -2 as const;
+/** internal magic number representing NaN */
 export const NAN_INDEX = -3 as const;
+/** internal magic number representing Infinity */
 export const POS_INF_INDEX = -4 as const;
+/** internal magic number representing -Infinity */
 export const NEG_INF_INDEX = -5 as const;
 
 // magic numbers for oson list type labels
+/** internal magic number labelling a bigint */
 export const BIG_INT_LABEL = -6 as const;
 
 export type OsonMagic =
