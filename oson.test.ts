@@ -3,8 +3,8 @@ import {
   assertEquals,
   assertInstanceOf,
   assertStrictEquals,
-} from "https://deno.land/std@0.157.0/testing/asserts.ts";
-import { describe, it } from "https://deno.land/std@0.157.0/testing/bdd.ts";
+} from "https://deno.land/std@0.218.2/assert/mod.ts";
+import { describe, it } from "https://deno.land/std@0.218.2/testing/bdd.ts";
 
 import { delistify, listify } from "./oson.ts";
 
