@@ -6,12 +6,7 @@ oson fixes them.
 
 ## installation
 
-```ts
-// deno:
-import * as oson from "https://deno.land/x/oson/mod.ts";
-// node:
-import * as oson from "o-son"; // npm install o-son
-```
+oson is on [jsr](https://jsr.io/@knorpelsenf/oson).
 
 ## features
 
