@@ -18,11 +18,11 @@ export interface BucketContructor<C, V = any>
 }
 
 export const PLAIN_OBJECT_LABEL = "";
-export const GLOBAL_CONSTRUCTOR_MAP = globalConstructorMap();
+export const GLOBAL_CONSTRUCTOR_MAP: ConstructorMap = globalConstructorMap();
 
 const enc = new TextEncoder();
 const dec8 = new TextDecoder("utf-8");
-export function globalConstructorMap() {
+export function globalConstructorMap(): ConstructorMap {
   const error: BucketContructor<Error> = {
     instance: Error,
     from: (err) => {

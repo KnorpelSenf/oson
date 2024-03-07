@@ -1,19 +1,18 @@
 {
+  "name": "@knorpelsenf/oson",
+  "version": "2.0.0",
+  "exports": "./mod.ts",
   "lock": false,
   "tasks": {
     "dev": "deno fmt && deno lint && deno task test && deno task check",
-    "test": "bash -c 'echo *.test.ts' | xargs deno test",
+    "test": "deno test *.test.ts",
     "check": "deno cache --check=all mod.ts",
-    "coverage": "deno task test --coverage=./cov_profile && deno coverage --lcov --output=./coverage.lcov ./cov_profile",
-    "report": "genhtml ./coverage.lcov --output-directory ./coverage/ && echo 'Point your browser to coverage/index.html to see the test coverage report.'",
-    "bench": "deno bench mod.bench.ts",
-    "build": "NODE_OPTIONS='--disable-proto=delete' deno run --allow-run --allow-net --allow-env --allow-read --allow-write build.ts",
-    "release": "[ -f npm/package.json ] && git push --tags && cd npm && npm publish || echo Missing build output!",
-    "clean": "rm -rf cov_profile coverage npm coverage.lcov"
+    "coverage": "deno task test --coverage=./cov_profile && deno coverage --html ./cov_profile",
+    "bench": "deno bench mod.bench.ts"
   },
-  "lint": { "files": { "exclude": ["npm", "arson"] } },
   "fmt": {
-    "files": { "exclude": ["npm", "arson"] },
-    "options": { "proseWrap": "preserve" }
+    "options": {
+      "proseWrap": "preserve"
+    }
   }
 }
