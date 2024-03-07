@@ -56,29 +56,6 @@ jobs:
       - name: Run Tests
         run: deno task test
 
-  build:
-    runs-on: ${{ matrix.os }} # runs the build on Ubuntu, Windows and macOS
-
-    strategy:
-      matrix:
-        os: [macOS-latest, windows-latest, ubuntu-latest]
-
-    steps:
-      - name: Setup repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - uses: denoland/setup-deno@main
-        with:
-          deno-version: v1.x
-
-      - name: Cache Dependencies
-        run: deno task check
-
-      - name: Run Tests
-        run: deno task build dummyversion
-
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +69,10 @@ jobs:
           deno-version: v1.x
 
       - name: Create coverage files
-        run: deno task coverage
+        run: deno task test --coverage=./cov_profile
+
+      - name: Generate LCOV report
+        run: deno coverage --lcov --output=./coverage.lcov ./cov_profile
 
       - name: Collect coverage
         uses: codecov/codecov-action@v1.0.10 # upload the report on Codecov
