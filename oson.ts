@@ -15,6 +15,7 @@ export const NEG_INF_INDEX = -5 as const;
 /** internal magic number labelling a bigint */
 export const BIG_INT_LABEL = -6 as const;
 
+/** union type of all internal magic numbers */
 export type OsonMagic =
   | typeof UNDEFINED_INDEX
   | typeof ARRAY_HOLE_INDEX
@@ -22,12 +23,19 @@ export type OsonMagic =
   | typeof POS_INF_INDEX
   | typeof NEG_INF_INDEX;
 
+/** encoded Oson data */
 export type Oson = OsonMagic | OsonValue[];
+/** value inside encoded Oson data */
 export type OsonValue = OsonPrimitive | OsonList;
-export type OsonList = OsonBigInt | OsonArray | OsonObject;
+/** primitive value inside encoded Oson data */
 export type OsonPrimitive = string | number | boolean | null;
+/** complex value inside encoded Oson data */
+export type OsonList = OsonBigInt | OsonArray | OsonObject;
+/** bigint encoded as Oson data */
 export type OsonBigInt = [typeof BIG_INT_LABEL, string];
+/** array encoded as Oson data */
 export type OsonArray = number[];
+/** object encoded as Oson data */
 export type OsonObject = [label: string, ...values: number[]];
 
 function isOsonObject(array: OsonList): array is OsonObject {
@@ -44,6 +52,15 @@ import {
   PLAIN_OBJECT_LABEL,
 } from "./constructors.ts";
 
+/**
+ * Converts a value to string. This will preserve circular and repeated
+ * references as well as undefined, sparse arrays, bigint, and all classes
+ * instances defined by the constructor map.
+ *
+ * @param value The value to convert to string
+ * @param constructors The constructor map to use for class instances
+ * @returns The string containing the encoded value
+ */
 export function stringify<C = any>(
   value: unknown = undefined,
   constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
@@ -51,6 +68,15 @@ export function stringify<C = any>(
   return JSON.stringify(listify(value, constructors));
 }
 
+/**
+ * Converts a string created using `stringify` back to a value. This will
+ * restore circular and repeated references as well as undefined, sparse arrays,
+ * bigint, and all classes instances defined by the constructor map.
+ *
+ * @param text The string containing the encoded value
+ * @param constructors The constructor map to use for class instances
+ * @returns The parsed value
+ */
 export function parse<C = any>(
   text: string,
   constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
@@ -160,6 +186,16 @@ function createObject(label: string, val: any, constructors: ConstructorMap) {
   return creator.create(val);
 }
 
+/**
+ * Converts a value to Oson data. Oson data only contains numbers, strings,
+ * arrays, and null values, and can therefore be JSON-encoded. This will
+ * preserve circular and repeated references as well as undefined, sparse
+ * arrays, bigint, and all classes instances defined by the constructor map.
+ *
+ * @param value The value to convert to Oson data
+ * @param constructors The constructor map to use for class instances
+ * @returns The Oson data containing the encoded value
+ */
 export function listify<C = any>(
   value: unknown,
   constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
@@ -219,6 +255,15 @@ export function listify<C = any>(
   }
 }
 
+/**
+ * Converts a Oson data back to a value. This will restore circular and repeated
+ * references as well as undefined, sparse arrays, bigint, and all classes
+ * instances defined by the constructor map.
+ *
+ * @param oson The Oson data to convert
+ * @param constructors The constructor map to use for class instances
+ * @returns The decoded value
+ */
 export function delistify<C = any>(
   oson: Oson,
   constructors: ConstructorMap<C> = GLOBAL_CONSTRUCTOR_MAP,
